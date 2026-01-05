@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mini Battle Royale FPS</title>
+<style>
+body {
+    margin: 0;
+    background: #000;
+    color: white;
+    font-family: Arial;
+    overflow: hidden;
+}
+#hud {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    font-size: 16px;
+    z-index: 5;
+}
+#crosshair {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin-left: -10px;
+    margin-top: -10px;
+    z-index: 5;
+}
+#crosshair::before, #crosshair::after {
+    content: '';
+    position: absolute;
+    background: white;
+}
+#crosshair::before {
+    width: 2px;
+    height: 20px;
+    left: 9px;
+}
+#crosshair::after {
+    width: 20px;
+    height: 2px;
+    top: 9px;
+}
+.enemy {
+    position: absolute;
+    width: 35px;
+    height: 35px;
+    background: red;
+}
+#start {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 15px;
+    font-size: 22px;
+    z-index: 10;
+}
+#weapon {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    font-size: 16px;
+}
+</style>
+</head>
+<body>
+
+<div id="hud">
+❤️ Vida: <span id="vida">100</span><br>
+💀 Kills: <span id="kills">0</span>
+</div>
+
+<div id="weapon">🔫 Pistola</div>
+<div id="crosshair"></div>
+<button id="start">🪂 Saltar del avión</button>
+
+<script>
+let vida = 100;
+let kills = 0;
+let enemigos = [];
+let jugando = false;
+let cayendo = true;
+
+const armas = [
+    { nombre: "Pistola", daño: 25 },
+    { nombre: "Rifle", daño: 40 },
+    { nombre: "Escopeta", daño: 70 }
+];
+let armaActual = 0;
+
+const vidaSpan = document.getElementById("vida");
+const killsSpan = document.getElementById("kills");
+const startBtn = document.getElementById("start");
+const weaponDiv = document.getElementById("weapon");
+
+startBtn.onclick = () => {
+    startBtn.style.display = "none";
+    setTimeout(() => cayendo = false, 3000);
+    jugando = true;
+};
+
+function crearEnemigo() {
+    if (!jugando || cayendo) return;
+    const e = document.createElement("div");
+    e.className = "enemy";
+    e.dataset.vida = 100;
+    e.style.left = Math.random() * window.innerWidth + "px";
+    e.style.top = Math.random() * window.innerHeight + "px";
+    document.body.appendChild(e);
+    enemigos.push(e);
+}
+
+function moverEnemigos() {
+    enemigos.forEach(e => {
+        const rect = e.getBoundingClientRect();
+        const dx = window.innerWidth / 2 - rect.left;
+        const dy = window.innerHeight / 2 - rect.top;
+        e.style.left = rect.left + dx * 0.005 + "px";
+        e.style.top = rect.top + dy * 0.005 + "px";
+    });
+}
+
+function disparar() {
+    if (!jugando || cayendo) return;
+
+    enemigos.forEach((e, i) => {
+        const rect = e.getBoundingClientRect();
+        const cx = innerWidth / 2;
+        const cy = innerHeight / 2;
+
+        if (cx > rect.left && cx < rect.right && cy > rect.top && cy < rect.bottom) {
+            e.dataset.vida -= armas[armaActual].daño;
+            if (e.dataset.vida <= 0) {
+                e.remove();
+                enemigos.splice(i, 1);
+                kills++;
+                killsSpan.textContent = kills;
+            }
+        }
+    });
+}
+
+document.addEventListener("click", disparar);
+document.addEventListener("touchstart", disparar);
+
+// Cambiar arma tocando esquina inferior derecha
+weaponDiv.onclick = () => {
+    armaActual = (armaActual + 1) % armas.length;
+    weaponDiv.textContent = "🔫 " + armas[armaActual].nombre;
+};
+
+// Daño enemigo
+setInterval(() => {
+    if (cayendo) return;
+    enemigos.forEach(e => {
+        const r = e.getBoundingClientRect();
+        if (
+            r.left < innerWidth / 2 &&
+            r.right > innerWidth / 2 &&
+            r.top < innerHeight / 2 &&
+            r.bottom > innerHeight / 2
+        ) {
+            vida -= 1;
+            vidaSpan.textContent = vida;
+            if (vida <= 0) {
+                alert("GAME OVER\nKills: " + kills);
+                location.reload();
+            }
+        }
+    });
+}, 100);
+
+// Spawn y movimiento
+setInterval(crearEnemigo, 1500);
+setInterval(moverEnemigos, 30);
+</script>
+
+</body>
+</html>
