@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Evita los Cuadrados</title>
+<style>
+    body {
+        margin: 0;
+        background: #111;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        color: white;
+        font-family: Arial;
+    }
+    canvas {
+        background: #222;
+        border: 3px solid white;
+    }
+    button {
+        margin-top: 10px;
+        padding: 8px 15px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+
+<canvas id="juego" width="500" height="500"></canvas>
+<button onclick="reiniciar()">Reiniciar</button>
+
+<script>
+const canvas = document.getElementById("juego");
+const ctx = canvas.getContext("2d");
+
+let jugador, enemigos, puntos, gameOver, intervaloEnemigos;
+let teclas = {};
+
+function iniciarJuego() {
+    jugador = { x: 240, y: 240, size: 20, speed: 5 };
+    enemigos = [];
+    puntos = 0;
+    gameOver = false;
+
+    clearInterval(intervaloEnemigos);
+    intervaloEnemigos = setInterval(crearEnemigo, 1000);
+}
+
+window.addEventListener("keydown", e => teclas[e.key] = true);
+window.addEventListener("keyup", e => teclas[e.key] = false);
+
+function crearEnemigo() {
+    enemigos.push({
+        x: Math.random() * 480,
+        y: 0,
+        size: 20,
+        speed: 2 + Math.random() * 4
+    });
+}
+
+function colision(a, b) {
+    return (
+        a.x < b.x + b.size &&
+        a.x + a.size > b.x &&
+        a.y < b.y + b.size &&
+        a.y + a.size > b.y
+    );
+}
+
+function actualizar() {
+    if (gameOver) return;
+
+    if (teclas["ArrowUp"] && jugador.y > 0) jugador.y -= jugador.speed;
+    if (teclas["ArrowDown"] && jugador.y < 480) jugador.y += jugador.speed;
+    if (teclas["ArrowLeft"] && jugador.x > 0) jugador.x -= jugador.speed;
+    if (teclas["ArrowRight"] && jugador.x < 480) jugador.x += jugador.speed;
+
+    enemigos.forEach(e => {
+        e.y += e.speed;
+        if (colision(jugador, e)) {
+            gameOver = true;
+        }
+    });
+
+    enemigos = enemigos.filter(e => e.y < 500);
+    puntos++;
+}
+
+function dibujar() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "cyan";
+    ctx.fillRect(jugador.x, jugador.y, jugador.size, jugador.size);
+
+    ctx.fillStyle = "red";
+    enemigos.forEach(e => ctx.fillRect(e.x, e.y, e.size, e.size));
+
+    ctx.fillStyle = "white";
+    ctx.font = "16px Arial";
+    ctx.fillText("Puntos: " + puntos, 10, 20);
+
+    if (gameOver) {
+        ctx.font = "30px Arial";
+        ctx.fillText("GAME OVER", 150, 240);
+        ctx.font = "18px Arial";
+        ctx.fillText("Presiona Reiniciar", 160, 270);
+    }
+}
+
+function reiniciar() {
+    iniciarJuego();
+}
+
+setInterval(() => {
+    actualizar();
+    dibujar();
+}, 1000 / 60);
+
+iniciarJuego();
+</script>
+
+</body>
+</html>
