@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mini Battle Royale FPS</title>
+<style>
+body {
+    margin: 0;
+    background: black;
+    color: white;
+    font-family: Arial;
+    overflow: hidden;
+}
+#hud {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    font-size: 18px;
+}
+#crosshair {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin-left: -10px;
+    margin-top: -10px;
+}
+#crosshair:before, #crosshair:after {
+    content: '';
+    position: absolute;
+    background: white;
+}
+#crosshair:before {
+    width: 2px;
+    height: 20px;
+    left: 9px;
+}
+#crosshair:after {
+    width: 20px;
+    height: 2px;
+    top: 9px;
+}
+.enemy {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: red;
+}
+#start {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    padding: 15px;
+}
+</style>
+</head>
+<body>
+
+<div id="hud">
+❤️ Vida: <span id="vida">100</span><br>
+💀 Kills: <span id="kills">0</span>
+</div>
+
+<div id="crosshair"></div>
+<button id="start">TOCAR PARA JUGAR</button>
+
+<script>
+let vida = 100;
+let kills = 0;
+let enemigos = [];
+let jugando = false;
+
+const vidaSpan = document.getElementById("vida");
+const killsSpan = document.getElementById("kills");
+const startBtn = document.getElementById("start");
+
+startBtn.onclick = () => {
+    jugando = true;
+    startBtn.style.display = "none";
+};
+
+function crearEnemigo() {
+    if (!jugando) return;
+    const e = document.createElement("div");
+    e.className = "enemy";
+    e.style.left = Math.random() * (window.innerWidth - 40) + "px";
+    e.style.top = Math.random() * (window.innerHeight - 40) + "px";
+    document.body.appendChild(e);
+    enemigos.push(e);
+}
+
+function disparar() {
+    if (!jugando) return;
+
+    enemigos.forEach((e, i) => {
+        const rect = e.getBoundingClientRect();
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight / 2;
+
+        if (
+            cx > rect.left &&
+            cx < rect.right &&
+            cy > rect.top &&
+            cy < rect.bottom
+        ) {
+            e.remove();
+            enemigos.splice(i, 1);
+            kills++;
+            killsSpan.textContent = kills;
+        }
+    });
+}
+
+document.addEventListener("click", disparar);
+document.addEventListener("touchstart", disparar);
+
+setInterval(() => {
+    enemigos.forEach(e => {
+        const rect = e.getBoundingClientRect();
+        if (
+            rect.left < window.innerWidth / 2 &&
+            rect.right > window.innerWidth / 2 &&
+            rect.top < window.innerHeight / 2 &&
+            rect.bottom > window.innerHeight / 2
+        ) {
+            vida -= 1;
+            vidaSpan.textContent = vida;
+            if (vida <= 0) {
+                alert("GAME OVER\nKills: " + kills);
+                location.reload();
+            }
+        }
+    });
+}, 100);
+
+setInterval(crearEnemigo, 1500);
+</script>
+
+</body>
+</html>
